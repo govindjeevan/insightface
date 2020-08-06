@@ -160,14 +160,20 @@ def evaluate(embeddings, actual_issame, nrof_folds=10, pca = 0):
 
 def get_paths(lfw_dir, pairs, file_ext):
     nrof_skipped_pairs = 0
+    n_match = 0
+    n_diff = 0
     path_list = []
     issame_list = []
     for pair in pairs:
         if len(pair) == 3:
+            n_match +=1
+            print("Match ",n_match)
             path0 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[1])+'.'+file_ext)
             path1 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[2])+'.'+file_ext)
             issame = True
         elif len(pair) == 4:
+            n_diff +=1
+            print("Match ",n_diff)
             path0 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[1])+'.'+file_ext)
             path1 = os.path.join(lfw_dir, pair[2], pair[2] + '_' + '%04d' % int(pair[3])+'.'+file_ext)
             issame = False
@@ -175,10 +181,12 @@ def get_paths(lfw_dir, pairs, file_ext):
             path_list += (path0,path1)
             issame_list.append(issame)
         else:
-            print('not exists', path0, path1)
+            print('not exists', path0, path1,'\n')
             nrof_skipped_pairs += 1
     if nrof_skipped_pairs>0:
         print('Skipped %d image pairs' % nrof_skipped_pairs)
+        print('Match %d pairs' % n_match)
+        print('Diff %d pairs' % n_diff)
     
     return path_list, issame_list
 
@@ -193,7 +201,7 @@ def read_pairs(pairs_filename):
 
 def load_dataset(lfw_dir, image_size):
   lfw_pairs = read_pairs(os.path.join(lfw_dir, 'pairs.txt'))
-  lfw_paths, issame_list = get_paths(lfw_dir, lfw_pairs, 'jpg')
+  lfw_paths, issame_list = get_paths(lfw_dir, lfw_pairs, 'png')
   lfw_data_list = []
   for flip in [0,1]:
     lfw_data = nd.empty((len(lfw_paths), 3, image_size[0], image_size[1]))

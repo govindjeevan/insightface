@@ -11,7 +11,9 @@ __pycache__/
 env/
 build/
 develop-eggs/
+datasets/
 dist/
+recognition/models
 downloads/
 eggs/
 .eggs/

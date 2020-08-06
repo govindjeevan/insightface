@@ -86,23 +86,25 @@ def image_encode(args, i, item, q_out):
     #print('flag', item.flag)
     if item.flag==0:
       fullpath = item.image_path
-      header = mx.recordio.IRHeader(item.flag, item.label, item.id, 0)
-      #print('write', item.flag, item.id, item.label)
-      if item.aligned:
-        with open(fullpath, 'rb') as fin:
-            img = fin.read()
-        s = mx.recordio.pack(header, img)
-        q_out.put((i, s, oitem))
-      else:
-        img = cv2.imread(fullpath, args.color)
-        assert item.landmark is not None
-        img = face_preprocess.preprocess(img, bbox = item.bbox, landmark=item.landmark, image_size='%d,%d'%(args.image_h, args.image_w))
-        s = mx.recordio.pack_img(header, img, quality=args.quality, img_fmt=args.encoding)
-        q_out.put((i, s, oitem))
+      if os.path.isfile(fullpath):
+        header = mx.recordio.IRHeader(item.flag, item.label, item.id, 0)
+        #print('write', item.flag, item.id, item.label)
+        if item.aligned:
+          with open(fullpath, 'rb') as fin:
+              img = fin.read()
+          s = mx.recordio.pack(header, img)
+          print("put ",i)
+          q_out.put((i, s, oitem))
+        else:
+          img = cv2.imread(fullpath, args.color)
+          assert item.landmark is not None
+          img = face_preprocess.preprocess(img, bbox = item.bbox, landmark=item.landmark, image_size='%d,%d'%(args.image_h, args.image_w))
+          s = mx.recordio.pack_img(header, img, quality=args.quality, img_fmt=args.encoding)
+          q_out.put((i, s, oitem))
     else: 
       header = mx.recordio.IRHeader(item.flag, item.label, item.id, 0)
       #print('write', item.flag, item.id, item.label)
-      s = mx.recordio.pack(header, '')
+      s = mx.recordio.pack(header, b'')
       q_out.put((i, s, oitem))
 
 
@@ -194,74 +196,78 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    if args.list:
-        pass
-        #make_list(args)
+    print(args.prefix)
+    if os.path.isdir(args.prefix):
+        working_dir = args.prefix
     else:
-        if os.path.isdir(args.prefix):
-            working_dir = args.prefix
-        else:
-            working_dir = os.path.dirname(args.prefix)
-        prop = face_image.load_property(working_dir)
-        image_size = prop.image_size
-        print('image_size', image_size)
-        args.image_h = image_size[0]
-        args.image_w = image_size[1]
-        files = [os.path.join(working_dir, fname) for fname in os.listdir(working_dir)
-                    if os.path.isfile(os.path.join(working_dir, fname))]
-        count = 0
-        for fname in files:
-            if fname.startswith(args.prefix) and fname.endswith('.lst'):
-                print('Creating .rec file from', fname, 'in', working_dir)
-                count += 1
-                image_list = read_list(fname)
-                # -- write_record -- #
-                if args.num_thread > 1 and multiprocessing is not None:
-                    q_in = [multiprocessing.Queue(1024) for i in range(args.num_thread)]
-                    q_out = multiprocessing.Queue(1024)
-                    read_process = [multiprocessing.Process(target=read_worker, args=(args, q_in[i], q_out)) \
-                                    for i in range(args.num_thread)]
-                    for p in read_process:
-                        p.start()
-                    write_process = multiprocessing.Process(target=write_worker, args=(q_out, fname, working_dir))
-                    write_process.start()
+        working_dir = os.path.dirname(args.prefix)
+    print("HEY")
+    prop = face_image.load_property(working_dir)
+    image_size = prop.image_size
+    print('image_size', image_size)
+    args.image_h = image_size[0]
+    args.image_w = image_size[1]
+    files = [os.path.join(working_dir, fname) for fname in os.listdir(working_dir)
+                if os.path.isfile(os.path.join(working_dir, fname))]
+    count = 0
+    for fname in files:
+        if fname.endswith('.lst'):
+            print('Creating .rec file from', fname, 'in', working_dir)
+            count += 1
+            image_list = read_list(fname)
+            # -- write_record -- #
+            if args.num_thread > 1 and multiprocessing is not None:
+                q_in = [multiprocessing.Queue(1024) for i in range(args.num_thread)]
+                q_out = multiprocessing.Queue(1024)
+                read_process = [multiprocessing.Process(target=read_worker, args=(args, q_in[i], q_out)) \
+                                for i in range(args.num_thread)]
+                for p in read_process:
+                    p.start()
+                write_process = multiprocessing.Process(target=write_worker, args=(q_out, fname, working_dir))
+                write_process.start()
 
-                    for i, item in enumerate(image_list):
-                        q_in[i % len(q_in)].put((i, item))
-                    for q in q_in:
-                        q.put(None)
-                    for p in read_process:
-                        p.join()
+                
+                for i, item in enumerate(image_list):
+                    q_in[i % len(q_in)].put((i, item))
+                for q in q_in:
+                    q.put(None)
+                for p in read_process:
+                    p.join()
 
-                    q_out.put(None)
-                    write_process.join()
-                else:
-                    print('multiprocessing not available, fall back to single threaded encoding')
-                    try:
-                        import Queue as queue
-                    except ImportError:
-                        import queue
-                    q_out = queue.Queue()
-                    fname = os.path.basename(fname)
-                    fname_rec = os.path.splitext(fname)[0] + '.rec'
-                    fname_idx = os.path.splitext(fname)[0] + '.idx'
-                    record = mx.recordio.MXIndexedRecordIO(os.path.join(working_dir, fname_idx),
-                                                           os.path.join(working_dir, fname_rec), 'w')
-                    cnt = 0
-                    pre_time = time.time()
-                    for i, item in enumerate(image_list):
-                        image_encode(args, i, item, q_out)
-                        if q_out.empty():
-                            continue
-                        _, s, item = q_out.get()
-                        #header, _ = mx.recordio.unpack(s)
-                        #print('write header label', header.label)
-                        record.write_idx(item[0], s)
-                        if cnt % 1000 == 0:
-                            cur_time = time.time()
-                            print('time:', cur_time - pre_time, ' count:', cnt)
-                            pre_time = cur_time
-                        cnt += 1
-        if not count:
-            print('Did not find and list file with prefix %s'%args.prefix)
+                q_out.put(None)
+                write_process.join()
+            else:
+                print('multiprocessing not available, fall back to single threaded encoding')
+                try:
+                    import Queue as queue
+                except ImportError:
+                    import queue
+                q_out = queue.Queue()
+                fname = os.path.basename(fname)
+                fname_rec = os.path.splitext(fname)[0] + '.rec'
+                fname_idx = os.path.splitext(fname)[0] + '.idx'
+                record = mx.recordio.MXIndexedRecordIO(os.path.join(working_dir, fname_idx),
+                                                       os.path.join(working_dir, fname_rec), 'w')
+                print("here1")
+                cnt = 0
+                pre_time = time.time()
+                for i, item in enumerate(image_list):
+                    print("here1")
+                    image_encode(args, i, item, q_out)
+                    if q_out.empty():
+                        print("empty")
+                        continue
+                    _, s, item = q_out.get()
+                    print("here2")
+                    header, _ = mx.recordio.unpack(s)
+                    print('write header label', header.label)
+                    record.write_idx(item[0], s)
+                    if cnt % 1000 == 0:
+                        cur_time = time.time()
+                        print('time:', cur_time - pre_time, ' count:', cnt)
+                        pre_time = cur_time
+                    cnt += 1
+                    print(cnt)
+    if not count:
+        print('Did not find and list file with prefix %s'%args.prefix)
 

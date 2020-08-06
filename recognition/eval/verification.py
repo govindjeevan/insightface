@@ -163,8 +163,18 @@ def calculate_val_far(threshold, dist, actual_issame):
     n_diff = np.sum(np.logical_not(actual_issame))
     #print(true_accept, false_accept)
     #print(n_same, n_diff)
-    val = float(true_accept) / float(n_same)
-    far = float(false_accept) / float(n_diff)
+    if float(n_diff)==0:
+        print("Threshold: ",threshold)
+        far = 0
+    else:
+        far = float(false_accept) / float(n_diff)
+        
+    if float(n_same) == 0:
+        print("Threshold: ",threshold)
+        val = 0
+    else:
+        val = float(true_accept) / float(n_same)
+
     return val, far
 
 def evaluate(embeddings, actual_issame, nrof_folds=10, pca = 0):

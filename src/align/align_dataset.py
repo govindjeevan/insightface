@@ -122,7 +122,7 @@ def parse_arguments(argv):
     parser.add_argument('--dlib_face_predictor', type=str,
         help='File containing the dlib face predictor.', default='../data/shape_predictor_68_face_landmarks.dat')
     parser.add_argument('--image_size', type=int,
-        help='Image size (height, width) in pixels.', default=110)
+        help='Image size (height, width) in pixels.', default=112)
     parser.add_argument('--face_size', type=int,
         help='Size of the face thumbnail (height, width) in pixels.', default=96)
     parser.add_argument('--use_center_crop', 
