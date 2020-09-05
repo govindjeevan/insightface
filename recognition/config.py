@@ -50,6 +50,39 @@ network.r50v1.net_name = 'fresnet'
 network.r50v1.num_layers = 50
 network.r50v1.net_unit = 1
 
+network.a56 = edict()
+network.a56.net_name = 'fresattnet'
+network.a56.num_layers = 56
+
+network.a92 = edict()
+network.a92.net_name = 'fresattnet'
+network.a92.num_layers = 92
+
+
+network.da92 = edict()
+network.da92.net_name = 'fdensenetatt'
+network.da92.num_layers = 92
+
+network.cbamd74 = edict()
+network.cbamd74.net_name = 'fcbamdense'
+network.cbamd74.num_layers = 74
+
+network.cbamd152 = edict()
+network.cbamd152.net_name = 'fcbamdense'
+network.cbamd152.num_layers = 152
+
+network.da90 = edict()
+network.da90.net_name = 'fcbam'
+network.da90.num_layers = 90
+
+network.ra200 = edict()
+network.ra200.net_name = 'fcbam'
+network.ra200.num_layers = 200
+
+network.ra152 = edict()
+network.ra152.net_name = 'fcbam'
+network.ra152.num_layers = 152
+
 network.d169 = edict()
 network.d169.net_name = 'fdensenet'
 network.d169.num_layers = 169
@@ -59,7 +92,7 @@ network.d169.densenet_dropout = 0.0
 network.d201 = edict()
 network.d201.net_name = 'fdensenet'
 network.d201.num_layers = 201
-network.d201.per_batch_size = 64
+network.d201.per_batch_size = 32
 network.d201.densenet_dropout = 0.0
 
 network.y1 = edict()
@@ -124,21 +157,21 @@ dataset.casia.dataset = 'casia'
 dataset.casia.dataset_path = '../datasets/faces_webface_112x112'
 dataset.casia.num_classes = 10575
 dataset.casia.image_shape = (112,112,3)
-dataset.casia.val_targets = ['lfw-custom', 'lfw']
+dataset.casia.val_targets = ['lfw-new-custom', 'lfw']
 
-dataset.casia_custom = edict()
-dataset.casia_custom.dataset = 'casia_custom'
-dataset.casia_custom.dataset_path = '/storage/MysterioNet/datasets/maskless/casia-112'
-dataset.casia_custom.num_classes = 10575
-dataset.casia_custom.image_shape = (112,112,3)
-dataset.casia_custom.val_targets = ['lfw-custom', 'lfw']
+dataset.casia_retina = edict()
+dataset.casia_retina.dataset = 'casia_retina'
+dataset.casia_retina.dataset_path = '/storage/MysterioNet/datasets/maskless/casia-retina'
+dataset.casia_retina.num_classes = 10575
+dataset.casia_retina.image_shape = (112,112,3)
+dataset.casia_retina.val_targets = ['lfw-new-custom', 'lfw']
 
-dataset.casia_masked = edict()
-dataset.casia_masked.dataset = 'casia_masked'
-dataset.casia_masked.dataset_path = '/storage/MysterioNet/datasets/smdf/original/casia'
-dataset.casia_masked.num_classes = 10575
-dataset.casia_masked.image_shape = (128,128,3)
-dataset.casia_masked.val_targets = ['lfw-masked', 'lfw']
+dataset.casia_retina_masked = edict()
+dataset.casia_retina_masked.dataset = 'casia_retina_masked'
+dataset.casia_retina_masked.dataset_path = '/storage/MysterioNet/datasets/smdf/original/casia-retina'
+dataset.casia_retina_masked.num_classes = 10575
+dataset.casia_retina_masked.image_shape = (112,112,3)
+dataset.casia_retina_masked.val_targets = ['lfw-masked','lfw']
 
 
 dataset.retina = edict()
@@ -186,7 +219,7 @@ loss.triplet.images_per_identity = 5
 loss.triplet.triplet_alpha = 0.3
 loss.triplet.triplet_bag_size = 7200
 loss.triplet.triplet_max_ap = 0.0
-loss.triplet.per_batch_size = 60
+loss.triplet.per_batch_size = 33
 loss.triplet.lr = 0.05
 
 loss.atriplet = edict()
@@ -216,7 +249,7 @@ default.end_epoch = 10000
 default.lr = 0.001
 default.wd = 0.0005
 default.mom = 0.9
-default.per_batch_size = 64
+default.per_batch_size = 128
 default.ckpt = 3
 default.lr_steps = '100000,160000,220000'
 default.models_root = './models'

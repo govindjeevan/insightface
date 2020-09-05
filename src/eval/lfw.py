@@ -158,25 +158,34 @@ def evaluate(embeddings, actual_issame, nrof_folds=10, pca = 0):
         np.asarray(actual_issame), 1e-3, nrof_folds=nrof_folds)
     return tpr, fpr, accuracy, val, val_std, far
 
-def get_paths(lfw_dir, pairs, file_ext):
+def get_paths(lfw_dir, pairs, file_ext, pair_type):
     nrof_skipped_pairs = 0
     n_match = 0
     n_diff = 0
     path_list = []
     issame_list = []
     for pair in pairs:
-        if len(pair) == 3:
-            n_match +=1
-            print("Match ",n_match)
-            path0 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[1])+'.'+file_ext)
-            path1 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[2])+'.'+file_ext)
-            issame = True
-        elif len(pair) == 4:
-            n_diff +=1
-            print("Match ",n_diff)
-            path0 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[1])+'.'+file_ext)
-            path1 = os.path.join(lfw_dir, pair[2], pair[2] + '_' + '%04d' % int(pair[3])+'.'+file_ext)
-            issame = False
+        if int(pair_type) == 1:
+            if pair[-1]=='1':
+                issame = True
+            else:
+                issame = False
+            path0 = os.path.join(lfw_dir, pair[0].split(".")[0])+'.'+file_ext
+            path1 = os.path.join(lfw_dir, pair[1].split(".")[0])+'.'+file_ext                         
+        else:
+            if len(pair) == 3:
+                n_match +=1
+                print("Match ",n_match)
+                path0 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[1])+'.'+file_ext)
+                path1 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[2])+'.'+file_ext)
+                issame = True
+            elif len(pair) == 4:
+                n_diff +=1
+                print("Match ",n_diff)
+                path0 = os.path.join(lfw_dir, pair[0], pair[0] + '_' + '%04d' % int(pair[1])+'.'+file_ext)
+                path1 = os.path.join(lfw_dir, pair[2], pair[2] + '_' + '%04d' % int(pair[3])+'.'+file_ext)
+                issame = False
+            
         if os.path.exists(path0) and os.path.exists(path1):    # Only add the pair if both paths exist
             path_list += (path0,path1)
             issame_list.append(issame)

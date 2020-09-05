@@ -21,7 +21,7 @@ from mxnet import ndarray as nd
 #from ._ndarray_internal import _cvcopyMakeBorder as copyMakeBorder
 from mxnet import io
 from mxnet import recordio
-sys.path.append(os.path.join(os.path.dirname(__file__), 'common'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..','src', 'common'))
 import face_preprocess
 
 logger = logging.getLogger()
@@ -181,7 +181,7 @@ class FaceImageIter(io.DataIter):
       for _id in ids:
         v = self.id2range[_id]
         _list = range(*v)
-        random.shuffle(_list)
+        random.shuffle(list(_list))
         if len(_list)>self.images_per_identity:
           _list = _list[0:self.images_per_identity]
         self.triplet_seq += _list

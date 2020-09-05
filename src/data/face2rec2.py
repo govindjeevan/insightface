@@ -33,6 +33,10 @@ from easydict import EasyDict as edict
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common'))
 import face_preprocess
 import face_image
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'common'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'RetinaFace'))
+import face_align
+from retinaface import RetinaFace
 
 try:
     import multiprocessing
@@ -196,15 +200,12 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    print(args.prefix)
     if os.path.isdir(args.prefix):
         working_dir = args.prefix
     else:
         working_dir = os.path.dirname(args.prefix)
-    print("HEY")
     prop = face_image.load_property(working_dir)
     image_size = prop.image_size
-    print('image_size', image_size)
     args.image_h = image_size[0]
     args.image_w = image_size[1]
     files = [os.path.join(working_dir, fname) for fname in os.listdir(working_dir)

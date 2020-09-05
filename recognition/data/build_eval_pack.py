@@ -54,6 +54,7 @@ parser = argparse.ArgumentParser(description='Package eval images')
 parser.add_argument('--data-dir', default='', help='')
 parser.add_argument('--image-size', type=int, default=112, help='')
 parser.add_argument('--gpu', type=int, default=0, help='')
+parser.add_argument('--ext', type=str, default='jpg', help='')
 parser.add_argument('--det-prefix', type=str, default='./model/R50', help='')
 parser.add_argument('--output', default='./', help='path to save.')
 parser.add_argument('--align-mode', default='arcface', help='align mode.')
@@ -101,23 +102,28 @@ def get_norm_crop(image_path):
 bins = []
 issame_list = []
 pp = 0
-for line in open(os.path.join(args.data_dir, 'pairs_label.txt'), 'r'):
+for line in open(os.path.join(args.data_dir, 'pairs.txt'), 'r'):
   pp+=1
   if pp%100==0:
     print('processing', pp)
   line = line.strip().split()
   assert len(line)==3
-  path1 = os.path.join(args.data_dir, line[0])
-  path2 = os.path.join(args.data_dir, line[1])
-  im1 = get_norm_crop(path1)
-  im2 = get_norm_crop(path2)
-  issame = True
-  if line[2]=='0':
-    issame = False
-  issame_list.append(issame)
-  for im in [im1, im2]:
-    _, s = cv2.imencode('.jpg', im)
-    bins.append(s)
+  path1 = os.path.join(args.data_dir, line[0].split(".")[0]) + '.' + args.ext
+  path2 = os.path.join(args.data_dir, line[1].split(".")[0]) + '.' + args.ext
+  if os.path.isfile(path1) and os.path.isfile(path2):
+   im1 = get_norm_crop(path1)
+   im2 = get_norm_crop(path2)
+   issame = True
+   if line[2]=='0':
+     issame = False
+   if im1 is None or im2 is None:
+     continue
+   issame_list.append(issame)
+   for im in [im1, im2]:
+     if im is not None:
+       print(pp)
+       _, s = cv2.imencode('.jpg', im)
+       bins.append(s)
 
 with open(args.output, 'wb') as f:
   pickle.dump((bins, issame_list), f, protocol=pickle.HIGHEST_PROTOCOL)
